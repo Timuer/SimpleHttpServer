@@ -2,9 +2,48 @@
 
 import socket
 from utils import log
+import urllib.parse
+from routes import dispatch_request
 
-def parsed_request(request):
-	parts = request.split("\r\n\r\n")
+class Request(object):
+	def __init__(self):
+		self.method = "GET"
+		self.path = ""
+		self.body = ""
+
+	# 获取请求体中的表单参数
+	def form(self):
+		pairs = self.body.split("&")
+		params = {}
+		for pair in pairs:
+			# 将客户端使用编码转义的特殊字符还原
+			pair = urllib.parse.unquote(pair)
+			key, value = pair.split("=")
+			params[key] = value
+		return params
+
+	# 获取路径中的参数
+	def query(self):
+		index = self.path.find("?")
+		if index == -1:
+			return {}
+		else:
+			query_str = self.path[index+1:]
+			pairs = query_str.split("&")
+			params = {}
+			for pair in pairs:
+				# 将客户端使用编码转义的特殊字符还原
+				pair = urllib.parse.unquote(pair)
+				key, value = pair.split("=")
+				params[key] = value
+			return params
+
+	def short_path(self):
+		return self.path.split("?")[0]
+
+def parsed_request(request_data):
+	parts = request_data.split("\r\n\r\n")
+	request = Request()
 	if len(parts) == 1:
 		head = parts[0]
 		if not head.strip():
@@ -13,7 +52,11 @@ def parsed_request(request):
 	else:
 		head = parts[0]
 		body = parts[1]
-	return head, body
+	head_info = parsed_request_head(head)
+	request.path = head_info["path"]
+	request.method = head_info["method"]
+	request.body = body
+	return request
 
 def parsed_request_head(head):
 	command_line = head.split("\r\n")[0]
@@ -37,62 +80,25 @@ def request_by_socket(sock):
 			break
 	return r
 
-def dispatch_req_by_path(path):
-	dispatch_dict = {
-		"/": route_index,
-		"/1.jpg": route_image,
-	}
-	route_func = dispatch_dict.get(path, error)
-	return route_func()
-
-def page(filename):
-	with open(filename, encoding="utf-8") as f:
-		return f.read()
-
-def route_page():
-	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
-	body = page("page\\1.html")
-	content = header + "\r\n" + body
-	return content.encode("utf-8")
-
-def route_index():
-	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
-	body = "<h1>Hello World</h1><img src='/1.jpg'>"
-	content = header + "\r\n" + body
-	return content.encode("utf-8")
-
-def route_image():
-	header = b"HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n"
-	with open("img\\1.jpg", "rb") as img:
-		content = header + b"\r\n" + img.read()
-	return content
-
-def error(error_code=404):
-	e = {
-		404: b"HTTP/1.1 404 NOT FOUND\r\n\r\n<h1>NOT FOUND</h1>"
-	}
-	return e.get(error_code)
-
 def start_server(host="", port=8000):
 	with socket.socket() as s:
 		s.bind((host, port))
-
 		while True:
 			s.listen(5)
 			# accept函数在接收到http请求之前不会返回，该线程会阻塞在这里
 			connection, address = s.accept()
-			request = request_by_socket(connection).decode("UTF-8")
+			log("connect address: ", address)
 			try:
-				# 解析请求
-				head, body = parsed_request(request)
-				head_info = parsed_request_head(head)
-
-				# 根据请求路径路由到相应处理函数
-				path = head_info["path"]
-				response = dispatch_req_by_path(path)
+				request_data = request_by_socket(connection).decode("UTF-8")
+				log(request_data)
+				# 解析请求，生成请求对象
+				request = parsed_request(request_data)
+				# 传递请求对象，由该函数分发到相应处理函数
+				response = dispatch_request(request)
 				connection.sendall(response)
 			except Exception as e:
 				log("error", e)
+				continue
 			connection.close()
 
 def main():
