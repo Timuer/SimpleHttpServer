@@ -2,13 +2,47 @@
 
 import socket
 import ssl
+from utils import log
+
+class Request(object):
+	def __init__(self):
+		self.method = "GET"
+		self.path = "/"
+		self.port = 80
+		self.protocol = "http"
+		self.headers = {}
+		self.body = ""
+
+	def set_request(self, url):
+		info = parsed_url(url)
+		self.path = info["path"]
+		self.port = info["port"]
+		self.protocol = info["protocol"]
+		self.host = info["host"]
+		self.add_header("host", info["host"])
+		self.add_header("Connection", "close")
+
+	def add_header(self, key, value):
+		self.headers[key] = value
+
+	def get_header(self, key):
+		return self.headers.get(key)
+
+	def data(self):
+		data = self.method + " " + self.path + " " + "HTTP/1.1\r\n"
+		for k, v in self.headers.items():
+			line = k + ": " + v + "\r\n"
+			data += line
+		content = data + "\r\n" + self.body
+		return content.encode("utf-8")
+
+
 
 def parsed_url(url):
 	protocol = "http"
 	host = ""
 	port = 80
 	path = "/"
-	query = ""
 
 	# 解析http协议
 	if url.startswith("https"):
@@ -22,15 +56,6 @@ def parsed_url(url):
 		path = "/"
 	else:
 		host = tmp[:i]
-
-		# 解析路径和参数
-		tmp = tmp[i:]
-		i = tmp.find("?")
-		if i == -1:
-			path = tmp
-		else:
-			path = tmp[:i]
-			query = tmp[i + 1:]
 
 	# 解析端口
 	port_dict = {
@@ -48,7 +73,6 @@ def parsed_url(url):
 		"host": host,
 		"port": port,
 		"path": path,
-		"query": query,
 	}
 
 
@@ -78,23 +102,30 @@ def parsed_response_head(head):
 		head_info[key] = value
 	return head_info
 
-def get(url):
-	url_info = parsed_url(url)
+
+def create_request(url):
+	request = Request()
+	request.set_request(url)
+	return request
+
+def get(request):
+
 	# 创建套接字
-	s = create_socket(url_info["protocol"])
+	s = create_socket(request.protocol)
 
 	# 创建HTTP请求报文
 	user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
 	referer = "https://movie.douban.com/"
-	http_data = "GET {} HTTP/1.1\r\nhost: {}\r\nConnection: close\r\nUser-Agent: {}\r\nReferer: {}\r\n\r\n"
-	http_request = http_data.format(url_info["path"], url_info["host"], user_agent, referer)
+	request.add_header("User-Agent", user_agent)
+	request.add_header("referer", referer)
 
 	# 连接到主机
-	s.connect((url_info["host"], url_info["port"]))
-	s.send(http_request.encode("utf-8"))
+	s.connect((request.host, request.port))
+	log(request.data())
+	s.send(request.data())
 
 	# 接收和解析响应
-	resp = response_by_socket().decode("utf-8")
+	resp = response_by_socket(s).decode("utf-8")
 	resp_info, html =  parsed_response(resp)
 
 	# 处理重定向
@@ -120,5 +151,6 @@ def response_by_socket(sock):
 	return r
 
 if __name__=="__main__":
-	head_info, html = get("https://movie.douban.com/chart")
+	r = create_request("https://movie.douban.com/chart")
+	head_info, html = get(r)
 	print(head_info, html)

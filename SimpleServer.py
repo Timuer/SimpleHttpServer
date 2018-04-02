@@ -5,6 +5,7 @@ from utils import log
 import urllib.parse
 from routes import dispatch_request
 
+
 class Request(object):
 	def __init__(self):
 		self.method = "GET"
@@ -28,7 +29,7 @@ class Request(object):
 		if index == -1:
 			return {}
 		else:
-			query_str = self.path[index+1:]
+			query_str = self.path[index + 1:]
 			pairs = query_str.split("&")
 			params = {}
 			for pair in pairs:
@@ -40,6 +41,7 @@ class Request(object):
 
 	def short_path(self):
 		return self.path.split("?")[0]
+
 
 def parsed_request(request_data):
 	parts = request_data.split("\r\n\r\n")
@@ -58,6 +60,7 @@ def parsed_request(request_data):
 	request.body = body
 	return request
 
+
 def parsed_request_head(head):
 	command_line = head.split("\r\n")[0]
 	headers = head.split("\r\n")[1:]
@@ -70,6 +73,7 @@ def parsed_request_head(head):
 		head_info[key] = value
 	return head_info
 
+
 def request_by_socket(sock):
 	r = b''
 	buffer_size = 1024
@@ -79,6 +83,7 @@ def request_by_socket(sock):
 		if len(buffer) < 1024:
 			break
 	return r
+
 
 def start_server(host="", port=8000):
 	with socket.socket() as s:
@@ -101,14 +106,14 @@ def start_server(host="", port=8000):
 				continue
 			connection.close()
 
+
 def main():
 	config = dict(
-		host = "",
-		port = 8000,
+		host="",
+		port=8000,
 	)
 	start_server(**config)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
 	main()
-
-
