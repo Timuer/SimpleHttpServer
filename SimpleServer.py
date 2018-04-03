@@ -11,6 +11,7 @@ class Request(object):
 		self.method = "GET"
 		self.path = ""
 		self.body = ""
+		self.info = {}
 
 	# 获取请求体中的表单参数
 	def form(self):
@@ -58,6 +59,7 @@ def parsed_request(request_data):
 	request.path = head_info["path"]
 	request.method = head_info["method"]
 	request.body = body
+	request.info = head_info
 	return request
 
 
@@ -95,7 +97,7 @@ def start_server(host="", port=8000):
 			log("connect address: ", address)
 			try:
 				request_data = request_by_socket(connection).decode("UTF-8")
-				log(request_data)
+
 				# 解析请求，生成请求对象
 				request = parsed_request(request_data)
 				# 传递请求对象，由该函数分发到相应处理函数

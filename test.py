@@ -1,4 +1,9 @@
 from SimpleClient import parsed_url
+from models import User
+from utils import log
+
+
+
 
 def test_parsed_url():
 	test_items = [
@@ -18,10 +23,45 @@ def test_parsed_url():
 		assert url_info["port"] == item[2], error.format(i, "port", url_info["port"], item[2])
 		assert url_info["path"] == item[3], error.format(i, "path", url_info["path"], item[3])
 
+
+def test_models_save():
+	a = {
+		"username": "tianmu",
+		"password": "12345",
+	}
+	u1 = User.new(a)
+	u1.save()
+	b = {
+		"username": "hhhh",
+		"password": "234",
+	}
+	u2 = User.new(b)
+	u2.save()
+	c = {
+		"username": "aaa",
+		"password": "fsdf",
+	}
+	u3 = User.new(c)
+	u3.save()
+
+
+def test_models_find_by():
+	u = User.find_by(username="tianmu")
+	if u:
+		log(u)
+	else:
+		log("no model find")
+
+
+def test_models_all():
+	users = User.all()
+	log([u for u in users])
+
 def main():
-	s = ""
-	p = s.split("e")
-	print(p)
+	test_models_save()
+	test_models_find_by()
+	test_models_all()
+
 
 if __name__ == "__main__":
 	main()

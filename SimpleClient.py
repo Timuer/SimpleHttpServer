@@ -4,6 +4,7 @@ import socket
 import ssl
 from utils import log
 
+
 class Request(object):
 	def __init__(self):
 		self.method = "GET"
@@ -35,7 +36,6 @@ class Request(object):
 			data += line
 		content = data + "\r\n" + self.body
 		return content.encode("utf-8")
-
 
 
 def parsed_url(url):
@@ -86,6 +86,7 @@ def parsed_response(resp):
 		body = parts[1]
 	return parsed_response_head(head), body
 
+
 def parsed_response_head(head):
 	command_line = head.split("\r\n")[0]
 	headers = head.split("\r\n")[1:]
@@ -108,37 +109,32 @@ def create_request(url):
 	request.set_request(url)
 	return request
 
-def get(request):
 
+def get(request):
 	# 创建套接字
 	s = create_socket(request.protocol)
 
-	# 创建HTTP请求报文
-	user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
-	referer = "https://movie.douban.com/"
-	request.add_header("User-Agent", user_agent)
-	request.add_header("referer", referer)
-
 	# 连接到主机
 	s.connect((request.host, request.port))
-	log(request.data())
 	s.send(request.data())
 
 	# 接收和解析响应
 	resp = response_by_socket(s).decode("utf-8")
-	resp_info, html =  parsed_response(resp)
+	resp_info, html = parsed_response(resp)
 
 	# 处理重定向
 	if resp_info["status"] in [301, 302]:
 		return get(resp_info["Location"])
 
-	return resp_info, html
+	return html
+
 
 def create_socket(protocol):
 	s = socket.socket()
 	if protocol == "https":
 		s = ssl.wrap_socket(s)
 	return s
+
 
 def response_by_socket(sock):
 	r = b''
@@ -150,7 +146,15 @@ def response_by_socket(sock):
 			break
 	return r
 
-if __name__=="__main__":
-	r = create_request("https://movie.douban.com/chart")
-	head_info, html = get(r)
-	print(head_info, html)
+
+if __name__ == "__main__":
+	# 创建请求对象
+	r = create_request("https://movie.douban.com/top250")
+	# 添加请求头
+	user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
+	referer = "https://movie.douban.com/"
+	r.add_header("User-Agent", user_agent)
+	r.add_header("referer", referer)
+	# 发送请求，获取响应
+	html = get(r)
+	print(html)

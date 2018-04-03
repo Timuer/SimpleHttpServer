@@ -1,14 +1,26 @@
 from utils import log
+from models import User
+
+
+def route_static(request):
+	header = b"HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n"
+	filename = request.query().get("file", "1.jpg")
+	with open("static/" + filename, "rb") as f:
+		content = header + b"\r\n" + f.read()
+	return content
+
 
 def template(filename):
 	with open(filename, encoding="utf-8") as f:
 		return f.read()
+
 
 def route_page(request):
 	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
 	body = template("templates\\1.html")
 	content = header + "\r\n" + body
 	return content.encode("utf-8")
+
 
 def route_index(request):
 	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
@@ -21,39 +33,38 @@ def route_index(request):
 		content = content.replace("{{user}}", "SomeBody")
 	return content.encode("utf-8")
 
-# def route_image(request):
-# 	header = b"HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n"
-# 	with open("img\\1.jpg", "rb") as img:
-# 		content = header + b"\r\n" + img.read()
-# 	return content
-
-def route_static(request):
-	header = b"HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n"
-	filename = request.query().get("file", "1.jpg")
-	with open("static/" + filename, "rb") as f:
-		content = header + b"\r\n" + f.read()
-	return content
 
 def route_login(request):
 	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
 	if request.method == "POST":
 		form = request.form()
-		user = form.get("user")
-		password = form.get("password")
-		if user and password:
-			if user == "tianmu" and password == "12345":
-				body = template("templates\\index.html").replace("{{user}}", user)
-			else:
-				body = template("templates\\loginForm.html")
+		user = User.new(form)
+		if user.validate_login():
+			body = template("templates\\success.html").replace("{{user}}", user.username)
 		else:
-			body = template("templates\\loginForm.html")
+			body = template("templates\\loginForm.html").replace("{{message}}", "您的用户名或密码不正确")
 	else:
-		body = template("templates\\loginForm.html")
+		body = template("templates\\loginForm.html").replace("{{message}}", "")
 	content = header + "\r\n" + body
 	return content.encode("utf-8")
 
+
 def route_register(request):
-	pass
+	header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
+	if request.method == "POST":
+		form = request.form()
+		user = User.new(form)
+		if user.validate_register():
+			user.save()
+			body = template("templates\\success.html").replace("{{user}}", user.username)
+		else:
+			body = template("templates\\registerForm.html").replace("{{message}}", "注册失败")
+	else:
+		body = template("templates\\registerForm.html").replace("{{message}}", "")
+	content = header + "\r\n" + body
+	return content.encode("utf-8")
+
+
 
 def error(request, error_code=404):
 	e = {
@@ -61,10 +72,12 @@ def error(request, error_code=404):
 	}
 	return e.get(error_code)
 
+
 def dispatch_request(request):
 	# 通过不带参数的路径映射到处理函数
 	route_func = dispatch_dict.get(request.short_path(), error)
 	return route_func(request)
+
 
 dispatch_dict = {
 	"/": route_index,
