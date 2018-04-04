@@ -74,6 +74,7 @@ class User(Model):
 		self.id = form.get("id", None)
 		self.username = form.get("username", "")
 		self.password = form.get("password", "")
+		self.description = form.get("description", "")
 
 	def validate_login(self):
 		users = self.all()

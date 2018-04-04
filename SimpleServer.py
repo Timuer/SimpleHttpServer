@@ -2,46 +2,9 @@
 
 import socket
 from utils import log
-import urllib.parse
-from routes import dispatch_request
-
-
-class Request(object):
-	def __init__(self):
-		self.method = "GET"
-		self.path = ""
-		self.body = ""
-		self.info = {}
-
-	# 获取请求体中的表单参数
-	def form(self):
-		pairs = self.body.split("&")
-		params = {}
-		for pair in pairs:
-			# 将客户端使用编码转义的特殊字符还原
-			pair = urllib.parse.unquote(pair)
-			key, value = pair.split("=")
-			params[key] = value
-		return params
-
-	# 获取路径中的参数
-	def query(self):
-		index = self.path.find("?")
-		if index == -1:
-			return {}
-		else:
-			query_str = self.path[index + 1:]
-			pairs = query_str.split("&")
-			params = {}
-			for pair in pairs:
-				# 将客户端使用编码转义的特殊字符还原
-				pair = urllib.parse.unquote(pair)
-				key, value = pair.split("=")
-				params[key] = value
-			return params
-
-	def short_path(self):
-		return self.path.split("?")[0]
+from objects import Request
+from routes import routes_dict
+from routes import error
 
 
 def parsed_request(request_data):
@@ -87,6 +50,17 @@ def request_by_socket(sock):
 	return r
 
 
+def dispatch_request(request):
+	# 通过不带参数的路径映射到处理函数
+	dispatch_dict.update(routes_dict)
+	route_func = dispatch_dict.get(request.short_path(), error)
+	return route_func(request)
+
+dispatch_dict = {
+
+}
+
+
 def start_server(host="", port=8000):
 	with socket.socket() as s:
 		s.bind((host, port))
@@ -102,7 +76,7 @@ def start_server(host="", port=8000):
 				request = parsed_request(request_data)
 				# 传递请求对象，由该函数分发到相应处理函数
 				response = dispatch_request(request)
-				connection.sendall(response)
+				connection.sendall(response.data())
 			except Exception as e:
 				log("error", e)
 				continue

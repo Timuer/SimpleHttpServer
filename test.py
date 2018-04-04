@@ -1,5 +1,6 @@
 from SimpleClient import parsed_url
 from models import User
+from SimpleServer import Response
 from utils import log
 
 
@@ -57,10 +58,15 @@ def test_models_all():
 	users = User.all()
 	log([u for u in users])
 
+
+def test_response():
+	resp = Response()
+	resp.add_header("Set-Cookie", "name=tianmu")
+	log(resp.data())
+
+
 def main():
-	test_models_save()
-	test_models_find_by()
-	test_models_all()
+	test_response()
 
 
 if __name__ == "__main__":
