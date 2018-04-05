@@ -4,7 +4,8 @@ from objects import Response
 from utils import random_str
 import time
 
-cookie_info = {}
+# 服务器端保存的客户的信息
+user_info = {}
 
 
 def route_static(request):
@@ -32,26 +33,11 @@ def route_index(request):
 	resp = Response()
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
 	body = template("templates\\index.html")
-	cookies = request.cookies()
-	is_user = False
-	if cookies:
-		for k, v in cookies.items():
-			if k == "user":
-				info = cookie_info.get(v, None)
-				if info:
-					t = info.get("expires")
-					if time.time() - t > 30 * 60 * 60:
-						cookie_info.pop(v)
-						is_user = False
-						break
-					else:
-						info["expires"] = time.time()
-						user = info.get("user")
-						body = body.replace("{{user}}", user)
-				is_user = True
-				break
-	if not is_user:
-		body = body.replace("{{user}}", "SomeBody")
+	# 验证是否登陆
+	user = request.validate_login(user_info)
+	if user is not None:
+		body = body.replace("{{user}}", user)
+	body = body.replace("{{user}}", "SomeBody")
 	resp.body = body.encode("utf-8")
 	return resp
 
@@ -64,11 +50,11 @@ def route_login(request):
 		user = User.new(form)
 		if user.validate_login():
 			s = random_str()
-			cookie_info[s] = {
-				"user": user.username,
+			user_info[s] = {
+				"username": user.username,
 				"expires": time.time()
 			}
-			cookie = "user={}".format(s)
+			cookie = "Session-Id={}".format(s)
 			resp.add_header("Set-Cookie", cookie)
 			body = template("templates\\success.html").replace("{{user}}", user.username)
 		else:

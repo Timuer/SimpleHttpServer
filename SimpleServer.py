@@ -4,6 +4,7 @@ import socket
 from utils import log
 from objects import Request
 from routes import routes_dict
+from todo_routes import routes_todo_dict
 from routes import error
 
 
@@ -52,13 +53,22 @@ def request_by_socket(sock):
 
 def dispatch_request(request):
 	# 通过不带参数的路径映射到处理函数
-	dispatch_dict.update(routes_dict)
+	dispatch_dict = update_dispatches()
 	route_func = dispatch_dict.get(request.short_path(), error)
 	return route_func(request)
 
-dispatch_dict = {
 
-}
+def update_dispatches():
+	dispatch_dict = {}
+	for d in routes_list:
+		dispatch_dict.update(d)
+	return dispatch_dict
+
+
+routes_list = [
+	routes_dict,
+	routes_todo_dict,
+]
 
 
 def start_server(host="", port=8000):

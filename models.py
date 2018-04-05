@@ -1,16 +1,12 @@
 import json
 from utils import log
+import uuid
 
 
 class Model(object):
-	num = None
 	@classmethod
 	def getid(cls):
-		if cls.num:
-			cls.num += 1
-		else:
-			cls.num = 1
-		return cls.num
+		return str(uuid.uuid1())
 
 	@classmethod
 	def model_path(cls):
@@ -36,20 +32,17 @@ class Model(object):
 
 	@classmethod
 	def find_by(cls, **kwargs):
-		path = cls.model_path()
-		with open(path, encoding="utf-8") as f:
-			s = f.read()
-			if s:
-				models = json.loads(s)
-				return [m for m in models if cls.match(m, kwargs)]
-			else:
-				return []
+		models = cls.all()
+		if models:
+			return [m for m in models if cls.match(m, kwargs)]
+		else:
+			return []
 
 	@classmethod
 	def match(cls, model, kwargs):
 		flag = True
 		for k, v in kwargs.items():
-			if model.get(k) != v:
+			if model.__dict__.get(k) != v:
 				flag = False
 		return flag
 
@@ -62,6 +55,20 @@ class Model(object):
 		with open(path, "w+", encoding="utf-8") as f:
 			s = json.dumps(model_list, indent=2, ensure_ascii=False)
 			f.write(s)
+
+	def del_by(self, **kwargs):
+		models = self.all()
+		del_item = None
+		for m in models:
+			if self.match(m, kwargs):
+				del_item = m
+		if del_item:
+			path = self.model_path()
+			models.remove(del_item)
+			model_list = [m.__dict__ for m in models]
+			with open(path, "w+", encoding="utf-8") as f:
+				s = json.dumps(model_list, indent=2, ensure_ascii=False)
+				f.write(s)
 
 	def __repr__(self):
 		classname = self.__class__.__name__
@@ -92,6 +99,12 @@ class User(Model):
 				return False
 		return True
 
+
+class Todo(Model):
+	def __init__(self, form):
+		self.id = form.get("id", None)
+		self.todos = form.get("todos", None)
+		self.userid = form.get("userid", None)
 
 
 

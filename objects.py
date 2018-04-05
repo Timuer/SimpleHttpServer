@@ -1,5 +1,6 @@
 import urllib.parse
-
+import time
+from models import User
 
 
 class Request(object):
@@ -49,6 +50,25 @@ class Request(object):
 				cookies[k.strip()] = v.strip()
 		return cookies
 
+	def validate_login(self, cookie_info):
+		cookies = self.cookies()
+		user = None
+		if cookies:
+			for k, v in cookies.items():
+				if k == "Session-Id":
+					info = cookie_info.get(v, None)
+					if info:
+						t = info.get("expires")
+						if time.time() - t > 30 * 60 * 60:
+							cookie_info.pop(v)
+							break
+						else:
+							info["expires"] = time.time()
+							username = info.get("username")
+							user = User.find_by(username=username)[0]
+							break
+		return user
+
 
 class Response(object):
 	def __init__(self):
@@ -63,6 +83,10 @@ class Response(object):
 	def add_headers(self, **kwargs):
 		for k, v in kwargs.items():
 			self.headers[k] = v
+
+	def set_redirect(self, url):
+		self.add_header("Location", url)
+		self.status = 302
 
 	def data(self):
 		status_line = "HTTP/1.1 {} {}\r\n".format(str(self.status), self.description)
