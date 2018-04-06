@@ -87,8 +87,8 @@ class User(Model):
 		users = self.all()
 		for u in users:
 			if u.username == self.username and u.password == self.password:
-				return True
-		return False
+				return u
+		return None
 
 	def validate_register(self):
 		if len(self.username) < 2 or len(self.password) < 2:
@@ -103,7 +103,7 @@ class User(Model):
 class Todo(Model):
 	def __init__(self, form):
 		self.id = form.get("id", None)
-		self.todos = form.get("todos", None)
+		self.todos = form.get("todos", [])
 		self.userid = form.get("userid", None)
 
 

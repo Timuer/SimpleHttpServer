@@ -5,7 +5,22 @@ from utils import random_str
 import time
 
 # 服务器端保存的客户的信息
-user_info = {}
+cookie_info = {}
+
+def login_required(func):
+	def real_route(request):
+		if request.validate_login(cookie_info):
+			return func(request)
+		else:
+			return redirect("/index")
+	return real_route
+
+
+def redirect(url):
+	response = Response()
+	response.status = 302
+	response.add_header("Location", url)
+	return response
 
 
 def route_static(request):
@@ -33,11 +48,11 @@ def route_index(request):
 	resp = Response()
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
 	body = template("templates\\index.html")
-	# 验证是否登陆
-	user = request.validate_login(user_info)
-	if user is not None:
-		body = body.replace("{{user}}", user)
-	body = body.replace("{{user}}", "SomeBody")
+	user = request.validate_login(cookie_info)
+	if user:
+		body = body.replace("{{user}}", user.username)
+	else:
+		body = body.replace("{{user}}", "【游客】")
 	resp.body = body.encode("utf-8")
 	return resp
 
@@ -47,11 +62,12 @@ def route_login(request):
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
 	if request.method == "POST":
 		form = request.form()
-		user = User.new(form)
-		if user.validate_login():
+		user_form = User.new(form)
+		user = user_form.validate_login()
+		if user:
 			s = random_str()
-			user_info[s] = {
-				"username": user.username,
+			cookie_info[s] = {
+				"userid": user.id,
 				"expires": time.time()
 			}
 			cookie = "Session-Id={}".format(s)
@@ -70,11 +86,13 @@ def route_register(request):
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
 	if request.method == "POST":
 		form = request.form()
-		user = User.new(form)
-		if user.validate_register():
-			user.save()
-			body = template("templates\\success.html").replace("{{user}}", user.username)
+		user_form = User.new(form)
+		if user_form.validate_register():
+			log("validate ok")
+			user_form.save()
+			body = template("templates\\success.html").replace("{{user}}", user_form.username)
 		else:
+			log("validate fail")
 			body = template("templates\\registerForm.html").replace("{{message}}", "注册失败")
 	else:
 		body = template("templates\\registerForm.html").replace("{{message}}", "")
