@@ -1,5 +1,6 @@
 import random
 import time
+import hashlib
 
 
 def get_local_time():
@@ -18,3 +19,7 @@ def random_str():
 		index = random.randint(0, len(s) - 2)
 		result += s[index]
 	return result
+
+
+def encrypted_password(pwd, salt="todo"):
+	return hashlib.md5((pwd + salt).encode("ascii")).hexdigest()

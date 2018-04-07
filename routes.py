@@ -5,6 +5,7 @@ from utils import random_str
 import time
 from jinja2 import Environment, FileSystemLoader
 import os.path
+from utils import encrypted_password
 
 
 path = "{}/templates/".format(os.path.dirname(__file__))
@@ -75,6 +76,7 @@ def route_login(request):
 	if request.method == "POST":
 		form = request.form()
 		user_form = User.new(form)
+		user_form.password = encrypted_password(user_form.password)
 		user = user_form.validate_login()
 		if user:
 			s = random_str()
@@ -99,6 +101,7 @@ def route_register(request):
 	if request.method == "POST":
 		form = request.form()
 		user_form = User.new(form)
+		user_form.password = encrypted_password(user_form.password)
 		if user_form.validate_register():
 			user_form.save()
 			tmp = env.get_template("success.html").render(user=user_form.username)

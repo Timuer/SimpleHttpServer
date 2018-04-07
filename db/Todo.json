@@ -1,46 +1,26 @@
 [
   {
-    "id": "9216912e-38e8-11e8-9058-cc2f7169007c",
+    "userid": "bb7a7ba8-3a66-11e8-8255-cc2f7169007c",
+    "id": "dd66f36c-3a66-11e8-80d8-cc2f7169007c",
     "todos": [
       {
-        "title": "aaaaaaaa",
-        "itemid": 1
+        "itemid": 2,
+        "title": "吃饭",
+        "created_time": "2018-04-07 21:23:08",
+        "updated_time": "2018-04-07 21:23:08"
       },
       {
-        "title": "eeeeeeeeee",
-        "itemid": 2
+        "itemid": 3,
+        "title": "嘿嘿嘿",
+        "created_time": "2018-04-07 21:23:14",
+        "updated_time": "2018-04-07 21:23:28"
       },
       {
-        "title": "xxxxxxxxxxx",
-        "itemid": 3
-      },
-      {
-        "title": "ffffffffffffff",
-        "itemid": 4
+        "itemid": 4,
+        "title": "打篮球",
+        "created_time": "2018-04-07 21:23:18",
+        "updated_time": "2018-04-07 21:23:18"
       }
-    ],
-    "userid": "79ffadc8-38e8-11e8-b5f0-cc2f7169007c"
-  },
-  {
-    "id": "0b62ea9e-3a3d-11e8-ae70-cc2f7169007c",
-    "todos": [
-      {
-        "title": "aaaaaa",
-        "itemid": 3
-      }
-    ],
-    "userid": "f679b5e6-39a2-11e8-87f6-cc2f7169007c"
-  },
-  {
-    "id": "bbce48d4-3a48-11e8-8201-cc2f7169007c",
-    "todos": [
-      {
-        "updated_time": "2018-04-07 17:47:49",
-        "title": "帆帆帆帆帆帆帆帆",
-        "itemid": 1,
-        "created_time": "2018-04-07 17:47:28"
-      }
-    ],
-    "userid": "5453c340-38a5-11e8-83ab-cc2f7169007c"
+    ]
   }
 ]
