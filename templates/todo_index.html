@@ -9,9 +9,25 @@
 			<input type="submit" value="提交">
 		</form>
 		<div>
-			<ol>
-				{{todos}}
-			</ol>
+			<table>
+				<tr>
+					<th>Todo项目</th>
+					<th>创建时间</th>
+					<th>更新时间</th>
+					<th>编辑Todo</th>
+					<th>删除Todo</th>
+				</tr>
+				{% for item in todos %}
+				<tr>
+					<td>{{item.title}}</td>
+					<td>{{item.created_time}}</td>
+					<td>{{item.updated_time}}</td>
+					<td><a href='/todo/edit?id={{item.itemid}}'>编辑</a></td>
+					<td><a href='/todo/del?id={{item.itemid}}'>删除</a></td>				
+				</tr>
+				{% endfor %}
+			</table>
+			<div>{{message}}</div>
 		</div>
 	</body>
 </html>

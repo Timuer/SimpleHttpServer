@@ -1,9 +1,14 @@
 import random
+import time
 
 
+def get_local_time():
+	return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 def log(*args, **kwargs):
-	print("log", args, kwargs)
+	t = get_local_time()
+	with open("server.log", 'a', encoding="utf-8") as f:
+		print("log", t, *args, file=f, **kwargs)
 
 
 def random_str():

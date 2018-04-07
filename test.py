@@ -1,6 +1,6 @@
 from SimpleClient import parsed_url
 from models import User
-from SimpleServer import Response
+from objects import Response
 from utils import log
 
 
@@ -65,8 +65,13 @@ def test_response():
 	log(resp.data())
 
 
+def test_log():
+	a = 100
+	log("a: ", a)
+
+
 def main():
-	test_response()
+	test_log()
 
 
 if __name__ == "__main__":

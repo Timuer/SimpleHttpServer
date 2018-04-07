@@ -3,6 +3,14 @@ from models import User
 from objects import Response
 from utils import random_str
 import time
+from jinja2 import Environment, FileSystemLoader
+import os.path
+
+
+path = "{}/templates/".format(os.path.dirname(__file__))
+loader = FileSystemLoader(path)
+env = Environment(loader=loader)
+
 
 # 服务器端保存的客户的信息
 cookie_info = {}
@@ -25,35 +33,39 @@ def redirect(url):
 
 def route_static(request):
 	resp = Response()
-	resp.add_header("Content-Type", "image/jpeg")
-	filename = request.query().get("file", "1.jpg")
-	with open("static/" + filename, "rb") as f:
+	filename = request.query().get("file", "")
+	path = ""
+	if filename.endswith(".jpg"):
+		resp.add_header("Content-Type", "image/jpeg")
+		path = "static/img/" + filename
+	elif filename.endswith(".js"):
+		resp.add_header("Content-Type", "application/javascript")
+		path = "static/js/" + filename
+	elif filename.endswith(".css"):
+		resp.add_header("Content-Type", "text/css")
+		path = "static/css/" + filename
+	with open(path, "rb") as f:
 		resp.body = f.read()
 	return resp
-
-
-def template(filename):
-	with open(filename, encoding="utf-8") as f:
-		return f.read()
 
 
 def route_page(request):
 	resp = Response()
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
-	resp.body = template("templates\\1.html").encode("utf-8")
+	resp.body = env.get_template("1.html").render().encode("utf-8")
 	return resp
 
 
 def route_index(request):
 	resp = Response()
 	resp.add_header("Content-Type", "text/html; charset=UTF-8")
-	body = template("templates\\index.html")
+	tmp = env.get_template("index.html")
 	user = request.validate_login(cookie_info)
 	if user:
-		body = body.replace("{{user}}", user.username)
+		tmp = tmp.render(user=user.username)
 	else:
-		body = body.replace("{{user}}", "【游客】")
-	resp.body = body.encode("utf-8")
+		tmp = tmp.render(user="【游客】")
+	resp.body = tmp.encode("utf-8")
 	return resp
 
 
@@ -72,12 +84,12 @@ def route_login(request):
 			}
 			cookie = "Session-Id={}".format(s)
 			resp.add_header("Set-Cookie", cookie)
-			body = template("templates\\success.html").replace("{{user}}", user.username)
+			tmp = env.get_template("success.html").render(user=user.username)
 		else:
-			body = template("templates\\loginForm.html").replace("{{message}}", "您的用户名或密码不正确")
+			tmp = env.get_template("loginForm.html").render(message="您的用户名或密码不正确")
 	else:
-		body = template("templates\\loginForm.html").replace("{{message}}", "")
-	resp.body = body.encode("utf-8")
+		tmp = env.get_template("loginForm.html").render(message="")
+	resp.body = tmp.encode("utf-8")
 	return resp
 
 
@@ -88,15 +100,13 @@ def route_register(request):
 		form = request.form()
 		user_form = User.new(form)
 		if user_form.validate_register():
-			log("validate ok")
 			user_form.save()
-			body = template("templates\\success.html").replace("{{user}}", user_form.username)
+			tmp = env.get_template("success.html").render(user=user_form.username)
 		else:
-			log("validate fail")
-			body = template("templates\\registerForm.html").replace("{{message}}", "注册失败")
+			tmp = env.get_template("registerForm.html").render(message="注册失败")
 	else:
-		body = template("templates\\registerForm.html").replace("{{message}}", "")
-	resp.body = body.encode("utf-8")
+		tmp = env.get_template("registerForm.html").render(message="")
+	resp.body = tmp.encode("utf-8")
 	return resp
 
 

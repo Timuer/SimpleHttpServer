@@ -52,7 +52,6 @@ def request_by_socket(sock):
 
 
 def dispatch_request(request):
-	# 通过不带参数的路径映射到处理函数
 	dispatch_dict = update_dispatches()
 	route_func = dispatch_dict.get(request.short_path(), error)
 	return route_func(request)
@@ -81,7 +80,6 @@ def start_server(host="", port=8000):
 			log("connect address: ", address)
 			try:
 				request_data = request_by_socket(connection).decode("UTF-8")
-
 				# 解析请求，生成请求对象
 				request = parsed_request(request_data)
 				# 传递请求对象，由该函数分发到相应处理函数

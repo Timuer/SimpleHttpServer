@@ -1,6 +1,7 @@
 import json
 from utils import log
 import uuid
+import time
 
 
 class Model(object):
@@ -76,6 +77,7 @@ class Model(object):
 		s = "\n".join(properties)
 		return "< {}\n{} >\n".format(classname, s)
 
+
 class User(Model):
 	def __init__(self, form):
 		self.id = form.get("id", None)
@@ -105,7 +107,4 @@ class Todo(Model):
 		self.id = form.get("id", None)
 		self.todos = form.get("todos", [])
 		self.userid = form.get("userid", None)
-
-
-
 
