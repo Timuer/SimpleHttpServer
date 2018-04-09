@@ -2,7 +2,7 @@ import json
 from utils import log
 import uuid
 import time
-
+import os
 
 class Model(object):
 	@classmethod
@@ -12,7 +12,7 @@ class Model(object):
 	@classmethod
 	def model_path(cls):
 		name = cls.__name__
-		path = "db\\{}.json".format(name)
+		path = "db{}{}.json".format(os.sep, name)
 		return path
 
 	@classmethod
