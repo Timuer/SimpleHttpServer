@@ -63,9 +63,14 @@ def route_index(request):
 	tmp = env.get_template("index.html")
 	user = request.validate_login(cookie_info)
 	if user:
-		tmp = tmp.render(user=user.username)
+		resp.add_header("Refresh", "5;URL=/todo")
+		tmp = tmp.render(cond=True,
+						 user=user.username,
+						 message="将于5秒后跳转到主页……")
 	else:
-		tmp = tmp.render(user="【游客】")
+		tmp = tmp.render(cond=False,
+						 user="【游客】",
+						 message="")
 	resp.body = tmp.encode("utf-8")
 	return resp
 
@@ -86,7 +91,10 @@ def route_login(request):
 			}
 			cookie = "Session-Id={}".format(s)
 			resp.add_header("Set-Cookie", cookie)
-			tmp = env.get_template("success.html").render(user=user.username)
+			resp.add_header("Refresh", "5;URL=/todo")
+			tmp = env.get_template("index.html").render(cond=True,
+														user=user.username,
+														message="将于5秒后跳转到主页……")
 		else:
 			tmp = env.get_template("loginForm.html").render(message="您的用户名或密码不正确")
 	else:

@@ -6,6 +6,7 @@ from objects import Request
 from routes import routes_dict
 from todo_routes import routes_todo_dict
 from routes import error
+import _thread
 
 
 def parsed_request(request_data):
@@ -70,7 +71,19 @@ routes_list = [
 ]
 
 
-def start_server(host="", port=8000):
+def process_response(connection):
+	try:
+		request_data = request_by_socket(connection).decode("UTF-8")
+		# 解析请求，生成请求对象
+		request = parsed_request(request_data)
+		# 传递请求对象，由该函数分发到相应处理函数
+		response = dispatch_request(request)
+		connection.sendall(response.data())
+	except Exception as e:
+		log("error", e)
+	connection.close()
+
+def start_server(host="", port=80):
 	with socket.socket() as s:
 		s.bind((host, port))
 		while True:
@@ -78,17 +91,7 @@ def start_server(host="", port=8000):
 			# accept函数在接收到http请求之前不会返回，该线程会阻塞在这里
 			connection, address = s.accept()
 			log("connect address: ", address)
-			try:
-				request_data = request_by_socket(connection).decode("UTF-8")
-				# 解析请求，生成请求对象
-				request = parsed_request(request_data)
-				# 传递请求对象，由该函数分发到相应处理函数
-				response = dispatch_request(request)
-				connection.sendall(response.data())
-			except Exception as e:
-				log("error", e)
-				continue
-			connection.close()
+			_thread.start_new_thread(process_response, (connection,))
 
 
 def main():
